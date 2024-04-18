@@ -58,42 +58,42 @@ export default function Test() {
   // 구독하기
   const [messages, setMessages] = useState<Content[]>([]);
 
-  stomp.onConnect = () => {
-    console.log("WebSocket 연결이 열렸습니다.");
-    const subscriptionDestination = isAdmin
-      ? `/exchange/chat.exchange/room.${selectedRoomId}`
-      : `/exchange/chat.exchange/room.${roomId}`;
+  // stomp.onConnect = () => {
+  //   console.log("WebSocket 연결이 열렸습니다.");
+  //   const subscriptionDestination = isAdmin
+  //     ? `/exchange/chat.exchange/room.${selectedRoomId}`
+  //     : `/exchange/chat.exchange/room.${roomId}`;
 
-    stomp.subscribe(subscriptionDestination, (frame) => {
-      try {
-        const parsedMessage = JSON.parse(frame.body);
+  //   stomp.subscribe(subscriptionDestination, (frame) => {
+  //     try {
+  //       const parsedMessage = JSON.parse(frame.body);
 
-        console.log(parsedMessage);
-        setMessages((prevMessages) => [...prevMessages, parsedMessage]);
-      } catch (error) {
-        console.error("오류가 발생했습니다:", error);
-      }
-    });
-  };
+  //       console.log(parsedMessage);
+  //       setMessages((prevMessages) => [...prevMessages, parsedMessage]);
+  //     } catch (error) {
+  //       console.error("오류가 발생했습니다:", error);
+  //     }
+  //   });
+  // };
 
-  const sendMessage = () => {
-    // 메시지 전송
-    if (stompClient && stompClient.connected) {
-      const destination = isAdmin
-        ? `/pub/chat.message.${selectedRoomId}`
-        : `/pub/chat.message.${roomId}`;
+  // const sendMessage = () => {
+  //   // 메시지 전송
+  //   if (stompClient && stompClient.connected) {
+  //     const destination = isAdmin
+  //       ? `/pub/chat.message.${selectedRoomId}`
+  //       : `/pub/chat.message.${roomId}`;
 
-      stompClient.publish({
-        destination,
-        body: JSON.stringify({
-          content: inputMessage,
-          sender: user,
-        }),
-      });
-    }
+  //     stompClient.publish({
+  //       destination,
+  //       body: JSON.stringify({
+  //         content: inputMessage,
+  //         sender: user,
+  //       }),
+  //     });
+  //   }
 
-    setInputMessage("");
-  };
+  //   setInputMessage("");
+  // };
 
   return <>hihi This page is Chat-page.</>;
 }
