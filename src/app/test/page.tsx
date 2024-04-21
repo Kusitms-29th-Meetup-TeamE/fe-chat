@@ -1,3 +1,5 @@
+"use client";
+
 import { Client, Stomp } from "@stomp/stompjs";
 import axios from "axios";
 import { useState } from "react";
