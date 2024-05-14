@@ -1,101 +1,136 @@
 "use client";
+import { Client, CompatClient, Stomp } from "@stomp/stompjs";
+import { useEffect, useState } from "react";
+import SockJS from "sockjs-client";
 
-import { Client, Stomp } from "@stomp/stompjs";
-import axios from "axios";
-import { useState } from "react";
+export default function Test2() {
+  const [chat, setChat] = useState("");
+  const [stompClient, setStompClient] = useState<CompatClient | null>(null);
+  const chatroomId = 12;
+  const myId = 5;
+  const [chatEmoticon, setChatEmoticon] = useState("");
+  const [chatList, setChatList] = useState<any[]>([]);
 
-interface Content {
-  content: string;
-  sender?: string;
-}
+  useEffect(() => {
+    const initializeWebSocket = () => {
+      const socket = new SockJS("https://api.yeongjin.site/ws");
+      const stompClient = Stomp.over(socket);
 
-export default function Test() {
-  // 1. 채팅방 생성
-
-  const [roomId, setRoomId] = useState<string>();
-
-  // 채팅방 생성 api
-  async function creatChatroom() {
-    const token = localStorage.getItem("accessToken");
-
-    try {
-      const response = await axios.post(
-        "http://localhost:8080/api/v1/chat/rooms",
+      stompClient.connect(
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
+        () => {
+          console.log("connection success");
+          subscribeToChatTopic(stompClient);
+        },
+        () => {
+          console.log("connection failed");
         }
       );
-      setRoomId(response.data.data);
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error("에러 메시지:", error.response?.data?.errorMessage);
-      } else {
-        console.error(error);
+
+      setStompClient(stompClient);
+    };
+
+    initializeWebSocket();
+
+    return () => {
+      if (stompClient) {
+        stompClient.disconnect();
       }
+    };
+  }, []); // Empty dependency array ensures that this effect runs only once
+
+  const subscribeToChatTopic = (stompClient: CompatClient) => {
+    stompClient.subscribe(`/topic/chatting/${chatroomId}`, (res) => {
+      const msgLog = JSON.parse(res.body).chatMessageLog;
+      setChatList(msgLog);
+    });
+  };
+
+  const sendChat = () => {
+    if (chat === "") {
+      return;
     }
-  }
 
-  // 2. 서버 연결
-  const token = localStorage.getItem("accessToken");
+    const messageObject = {
+      senderId: myId,
+      text: chat,
+    };
 
-  const [stompClient, setStompClient] = useState<Stomp | null>(null);
+    stompClient?.send(
+      `/app/chatting/${chatroomId}/text`,
+      {},
+      JSON.stringify(messageObject)
+    );
 
-  const stomp = new Client({
-    brokerURL: "ws://localhost:8080/chat",
-    connectHeaders: {
-      Authorization: `Bearer ${token}`,
-    },
-    debug: (str: string) => {
-      console.log(str);
-    },
-    reconnectDelay: 5000, //자동 재 연결
-    heartbeatIncoming: 4000,
-    heartbeatOutgoing: 4000,
-  });
-  setStompClient(stomp);
+    setChat("");
+  };
 
-  stomp.activate(); // 클라이언트 활성화
+  const sendEmoticon = () => {
+    if (chatEmoticon === "") {
+      return;
+    }
 
-  // 구독하기
-  const [messages, setMessages] = useState<Content[]>([]);
+    const messageObject = {
+      senderId: myId,
+      emoticon: chatEmoticon,
+    };
 
-  // stomp.onConnect = () => {
-  //   console.log("WebSocket 연결이 열렸습니다.");
-  //   const subscriptionDestination = isAdmin
-  //     ? `/exchange/chat.exchange/room.${selectedRoomId}`
-  //     : `/exchange/chat.exchange/room.${roomId}`;
+    stompClient?.send(
+      `/app/chatting/${chatroomId}/emoticon`,
+      {},
+      JSON.stringify(messageObject)
+    );
 
-  //   stomp.subscribe(subscriptionDestination, (frame) => {
-  //     try {
-  //       const parsedMessage = JSON.parse(frame.body);
+    setChatEmoticon("");
+  };
 
-  //       console.log(parsedMessage);
-  //       setMessages((prevMessages) => [...prevMessages, parsedMessage]);
-  //     } catch (error) {
-  //       console.error("오류가 발생했습니다:", error);
-  //     }
-  //   });
-  // };
+  const onChangeChat = (e: any) => {
+    setChat(e.target.value);
+  };
 
-  // const sendMessage = () => {
-  //   // 메시지 전송
-  //   if (stompClient && stompClient.connected) {
-  //     const destination = isAdmin
-  //       ? `/pub/chat.message.${selectedRoomId}`
-  //       : `/pub/chat.message.${roomId}`;
+  const onChangeEmoticon = (e: any) => {
+    setChatEmoticon(e.target.value);
+  };
 
-  //     stompClient.publish({
-  //       destination,
-  //       body: JSON.stringify({
-  //         content: inputMessage,
-  //         sender: user,
-  //       }),
-  //     });
-  //   }
+  const handleSubmit = (event: any) => {
+    event.preventDefault();
+  };
 
-  //   setInputMessage("");
-  // };
+  return (
+    <>
+      <div>
+        <div className="flex flex-col gap-2 border rounded max-h-[700px] overflow-y-auto">
+          새로운 메세지들
+          {chatList?.map((item: any, idx: number) => (
+            <div key={idx} className="inline-flex">
+              <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+                {item?.text}
+              </span>
+            </div>
+          ))}
+        </div>
 
-  return <>hihi This page is Chat-page.</>;
+        <form onSubmit={handleSubmit}>
+          <div className="flex gap-2 mt-4">
+            <input
+              type="text"
+              id="msg"
+              value={chat}
+              className="border rounded-md p-2 border-gray-500"
+              placeholder="메시지 보내기"
+              onChange={onChangeChat}
+              onKeyDown={(ev) => {
+                if (ev.keyCode === 13) {
+                  sendChat();
+                }
+              }}
+            />
+            <button type="submit" className="bg-gray-300 p-2 px-5 rounded-lg">
+              전송
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
 }

@@ -3,25 +3,16 @@ import { Client, CompatClient, Stomp } from "@stomp/stompjs";
 import { useEffect, useState } from "react";
 import SockJS from "sockjs-client";
 
-{
-  /* 
-
-24.04.21 기준 테스트 완료
-
-*/
-}
-
 export default function Test2() {
   const [chat, setChat] = useState(""); // 입력된 chat을 받을 변수
-  const [chatList, setChatList] = useState<any[]>([]); // 채팅 기록
   const [stompClient, setStompClient] = useState<CompatClient | null>(null);
   const chatroomId = 12;
   const myId = 5;
 
   const [chatEmoticon, setChatEmoticon] = useState("");
+  const [chatList, setChatList] = useState<any[]>([]); // 채팅 기록
 
   //
-  console.log("chatList:", chatList);
 
   useEffect(() => {
     const socket = new SockJS("https://api.yeongjin.site/ws");
@@ -38,7 +29,14 @@ export default function Test2() {
     );
 
     stompClient.onConnect = () => {
-      stompClient.subscribe(`/topic/chatting/${chatroomId}`, callback);
+      stompClient.subscribe(`/topic/chatting/${chatroomId}`, (res) => {
+        // console.log("res.body", JSON.parse(res.body));
+        // console.log("res", JSON.parse(res.body).chatMessageLog);
+        const msgLog = JSON.parse(res.body).chatMessageLog;
+        setChatList(msgLog);
+      });
+
+      // stompClient.subscribe(`/topic/chatting/${chatroomId}`, callback);
     };
 
     setStompClient(stompClient);
@@ -48,12 +46,24 @@ export default function Test2() {
         stompClient.disconnect();
       }
     };
-  }, []);
+  }, [chatList]);
+
+  console.log("stompclient", stompClient);
 
   const callback = (message: any) => {
     if (message.body) {
       let msg = JSON.parse(message.body);
       console.log("msg:", msg);
+      // setChatList((chats) => [...chats, msg]);
+      // setInitData(msg.chatMessageLog);
+      // setInitData((prev) => {
+      //   if (prev === null) {
+      //     return [msg];
+      //   } else {
+      //     return [...prev, msg];
+      //   }
+      // });
+
       // setChatList((chats) => [...chats, msg]);
 
       // setChatList((chats) => {
@@ -64,7 +74,8 @@ export default function Test2() {
     }
   };
 
-  const chatMsgLog = chatList[0]?.chatMessageLog;
+  // const chatMsgLog = initData[0]?.chatMessageLog;
+  // console.log("chatMsgLog", chatMsgLog);
 
   const sendChat = () => {
     if (chat === "") {
@@ -83,6 +94,8 @@ export default function Test2() {
     );
 
     console.log("object", messageObject);
+
+    //
 
     setChat("");
   };
@@ -119,46 +132,13 @@ export default function Test2() {
     event.preventDefault();
   };
 
-  const tempData = chatList[0]?.chatMessageLog[0];
-  // console.log("이게 subscribe 응답값이다", tempData);
-
-  const tempData2 = chatList?.map((item, idx) => {
-    return item.text;
-  });
-
-  // 메시지 로그 데이터 형식
-  const chatMessageLog = [
-    {
-      type: "TEXT",
-      createdAt: "2024-05-09T09:10:01.273",
-      text: "5",
-      emoticon: null,
-      experienceType: null,
-      appointmentTime: null,
-      location: null,
-      senderId: 5,
-      senderName: "홍길동",
-      senderImageUrl: "dummy",
-    },
-    {
-      type: "TEXT",
-      createdAt: "2024-05-09T09:10:01.273",
-      text: "5",
-      emoticon: null,
-      experienceType: null,
-      appointmentTime: null,
-      location: null,
-      senderId: 5,
-      senderName: "홍길동",
-      senderImageUrl: "dummy",
-    },
-  ];
+  console.log("chatlist", chatList);
 
   return (
     <>
       <div>
         {/* 채팅 리스트 */}
-        <div className="flex flex-col gap-2 border rounded max-h-[400px] overflow-y-auto">
+        <div className="flex flex-col gap-2 border rounded max-h-[700px] overflow-y-auto">
           {/* <div className="inline-flex">
             <span className="bg-yellow-200 py-2 px-5 rounded-lg">
               {tempData?.text}
@@ -166,10 +146,10 @@ export default function Test2() {
           </div> */}
           새로운 메세지들
           {/* 새로운 메시지 */}
-          {chatMsgLog?.map((item: any, idx: number) => (
+          {chatList?.map((item: any, idx: number) => (
             <div key={idx} className="inline-flex">
               <span className="bg-yellow-300 py-2 px-5 rounded-lg">
-                {item.text}
+                {item?.text}
               </span>
             </div>
           ))}
