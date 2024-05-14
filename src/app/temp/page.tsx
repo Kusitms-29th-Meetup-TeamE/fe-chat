@@ -46,6 +46,13 @@ export default function Test2() {
     });
   };
 
+  const callback = (message: any) => {
+    if (message.body) {
+      let msg = JSON.parse(message.body);
+      setChatList((prevChatList) => [...prevChatList, msg]); // 새로운 메시지를 chatList에 추가
+    }
+  };
+
   const sendChat = () => {
     if (chat === "") {
       return;
@@ -61,6 +68,8 @@ export default function Test2() {
       {},
       JSON.stringify(messageObject)
     );
+
+    stompClient?.subscribe(`/topic/chatting/${chatroomId}`, callback); // 새로운 메시지를 받을 때마다 callback 함수 실행
 
     setChat("");
   };
@@ -95,6 +104,8 @@ export default function Test2() {
   const handleSubmit = (event: any) => {
     event.preventDefault();
   };
+
+  console.log("chatlist:", chatList);
 
   return (
     <>
