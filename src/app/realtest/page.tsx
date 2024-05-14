@@ -120,9 +120,8 @@ export default function Test2() {
     }
 
     const messageObject = {
-      // message: chat,
       senderId: myId,
-      emoticon: chatEmoticon,
+      emoticon: "😈",
     };
 
     stompClient?.send(
@@ -149,7 +148,6 @@ export default function Test2() {
   console.log("chatlist", chatList);
 
   // scrollToBottom 구현하기
-
   const msgBoxRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -161,6 +159,24 @@ export default function Test2() {
   useEffect(() => {
     scrollToBottom();
   }, [chatList]);
+
+  // 약속잡기 api
+  const sendAppointment = () => {
+    const messageObject = {
+      senderId: myId,
+      experienceType: "요리",
+      appointmentTime: new Date(),
+      location: "청계동",
+    };
+
+    stompClient?.send(
+      `/app/chatting/${chatroomId}/appointment`,
+      {},
+      JSON.stringify(messageObject)
+    );
+
+    console.log("object", messageObject);
+  };
 
   return (
     <>
@@ -181,18 +197,44 @@ export default function Test2() {
           새로운 메세지들 (현재 시간으로 보여주기)
           {/* 새로운 메시지 */}
           {chatList?.map((item: any, idx: number) => {
-            return (
-              idx !== 0 && (
+            // return (
+            //   idx !== 0 && item.type==='TEXT' && (
+            //     <div key={idx} className="inline-flex">
+            //       <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+            //         {item?.text}
+            //       </span>
+            //     </div>
+            //   )
+            // );
+            if (idx !== 0 && item.type === "TEXT")
+              return (
                 <div key={idx} className="inline-flex">
                   <span className="bg-yellow-300 py-2 px-5 rounded-lg">
                     {item?.text}
                   </span>
                 </div>
-              )
-            );
+              );
+            if (idx !== 0 && item.type === "APPOINTMENT")
+              return (
+                <div key={idx} className="inline-flex">
+                  <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+                    일시: {item.appointmentTime}
+                    위치: {item.location}
+                  </span>
+                </div>
+              );
+            //  if (idx !== 0 && item.type === "APPOINTMENT")
+            //    return (
+            //      <div key={idx} className="inline-flex">
+            //        <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+            //          일시: {item.appointmentTime}
+            //          위치: {item.location}
+            //        </span>
+            //      </div>
+            //    );
           })}
         </div>
-
+        <button onClick={() => sendAppointment()}>약속잡기</button>
         {/* 하단 입력폼 */}
         <form onSubmit={handleSubmit}>
           <div className="flex gap-2 mt-4">
@@ -208,7 +250,7 @@ export default function Test2() {
                   sendEmoticon();
                 }
               }}
-            />{" "} */}
+            /> */}
             <input
               type="text"
               id="msg"
@@ -222,6 +264,13 @@ export default function Test2() {
                 }
               }}
             />
+            {/* <button
+              className="bg-pink-300 p-2 px-5 rounded-lg"
+              onClick={() => sendEmoticon()}
+            >
+              이모티콘 보내기 버튼
+            </button> */}
+
             <button
               onClick={() => sendChat()}
               type="submit"
