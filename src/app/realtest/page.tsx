@@ -6,7 +6,7 @@ import SockJS from "sockjs-client";
 export default function Test2() {
   const [chat, setChat] = useState(""); // 입력된 chat을 받을 변수
   const [stompClient, setStompClient] = useState<CompatClient | null>(null);
-  const chatroomId = 12;
+  const chatroomId = 10;
   const myId = 5;
 
   const [chatEmoticon, setChatEmoticon] = useState("");
@@ -115,13 +115,13 @@ export default function Test2() {
   };
 
   const sendEmoticon = () => {
-    if (chatEmoticon === "") {
-      return;
-    }
+    // if (chatEmoticon === "") {
+    //   return;
+    // }
 
     const messageObject = {
       senderId: myId,
-      emoticon: "😈",
+      emoticon: "안녕",
     };
 
     stompClient?.send(
@@ -130,7 +130,7 @@ export default function Test2() {
       JSON.stringify(messageObject)
     );
 
-    setChatEmoticon("");
+    // setChatEmoticon("");
   };
 
   const onChangeChat = (e: any) => {
@@ -187,13 +187,42 @@ export default function Test2() {
           className="flex flex-col gap-2 border rounded max-h-[700px] overflow-y-auto"
         >
           {/* 이전 로그들 메시지 */}
-          {logData?.map((item: any, idx: number) => (
-            <div key={idx} className="inline-flex">
-              <span className="bg-yellow-300 py-2 px-5 rounded-lg">
-                {item?.text}
-              </span>
-            </div>
-          ))}
+          {logData?.map((item: any, idx: number) => {
+            // return (
+            //   item.text && (
+            //     <div key={idx} className="inline-flex">
+            //       <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+            //         {item?.text}
+            //       </span>
+            //     </div>
+            //   )
+            // );
+            if (item.type === "TEXT")
+              return (
+                <div key={idx} className="inline-flex">
+                  <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+                    {item?.text}
+                  </span>
+                </div>
+              );
+            if (item.type === "APPOINTMENT")
+              return (
+                <div key={idx} className="inline-flex">
+                  <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+                    일시: {item.appointmentTime}
+                    위치: {item.location}
+                  </span>
+                </div>
+              );
+            if (item.type === "EMOTICON")
+              return (
+                <div key={idx} className="inline-flex">
+                  <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+                    {item.emoticon === "안녕" && "😃"}
+                  </span>
+                </div>
+              );
+          })}
           새로운 메세지들 (현재 시간으로 보여주기)
           {/* 새로운 메시지 */}
           {chatList?.map((item: any, idx: number) => {
@@ -223,21 +252,20 @@ export default function Test2() {
                   </span>
                 </div>
               );
-            //  if (idx !== 0 && item.type === "APPOINTMENT")
-            //    return (
-            //      <div key={idx} className="inline-flex">
-            //        <span className="bg-yellow-300 py-2 px-5 rounded-lg">
-            //          일시: {item.appointmentTime}
-            //          위치: {item.location}
-            //        </span>
-            //      </div>
-            //    );
+            if (idx !== 0 && item.type === "EMOTICON")
+              return (
+                <div key={idx} className="inline-flex">
+                  <span className="bg-yellow-300 py-2 px-5 rounded-lg">
+                    {item.emoticon === "안녕" && "😃"}
+                  </span>
+                </div>
+              );
           })}
         </div>
-        <button onClick={() => sendAppointment()}>약속잡기</button>
+
         {/* 하단 입력폼 */}
         <form onSubmit={handleSubmit}>
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 my-4">
             {/* <input
               type="text"
               id="emoticon"
@@ -264,12 +292,6 @@ export default function Test2() {
                 }
               }}
             />
-            {/* <button
-              className="bg-pink-300 p-2 px-5 rounded-lg"
-              onClick={() => sendEmoticon()}
-            >
-              이모티콘 보내기 버튼
-            </button> */}
 
             <button
               onClick={() => sendChat()}
@@ -280,6 +302,20 @@ export default function Test2() {
             </button>
           </div>
         </form>
+
+        <button
+          className="bg-blue-200 p-2 px-5 rounded-lg"
+          onClick={() => sendAppointment()}
+        >
+          약속잡기
+        </button>
+
+        <button
+          className="bg-pink-300 p-2 px-5 rounded-lg"
+          onClick={() => sendEmoticon()}
+        >
+          이모티콘 보내기 버튼
+        </button>
       </div>
     </>
   );
